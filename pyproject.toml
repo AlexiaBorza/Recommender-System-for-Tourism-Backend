@@ -1,0 +1,16 @@
+[project]
+name = "recommender-system-for-tourism-backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "aiosqlite>=0.20.0",
+    "fastapi>=0.124.4",
+    "fastapi-users[sqlalchemy]>=13.0.0",
+    "imagekitio>=4.2.0",
+    "pymysql>=1.1.2",
+    "python-dotenv>=1.0.1",
+    "sqlalchemy>=2.0.48",
+    "uvicorn[standard]>=0.33.0",
+]
