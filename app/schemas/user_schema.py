@@ -13,3 +13,22 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class PreferenceItem(BaseModel):
+    preference_type: str
+    preference_value: str
+
+
+class PreferencesCreate(BaseModel):
+    preferences: List[PreferenceItem]
+
+
+class PreferenceResponse(BaseModel):
+    id: int
+    user_id: int
+    preference_type: str
+    preference_value: str
+
+    class Config:
+        from_attributes = True
