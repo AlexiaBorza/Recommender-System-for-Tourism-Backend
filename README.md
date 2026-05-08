@@ -1,1 +1,4 @@
 # Recommender-System-for-Tourism
+This project focuses on developing an application that collects data about tourist destinations, including name, location, attraction type, price, season, and ratings, as well as user-related data such as searches, preferences, and browsing history. The system automatically generates personalized recommendation lists, helping users optimize their travel planning experience and discover the most suitable destinations based on their interests.
+
+The main objective of this project is to combine content-based filtering methods, through the analysis of destination characteristics and user preferences, with collaborative filtering techniques based on the behavior and preferences of users with similar interests. By integrating these approaches, the application aims to build a hybrid recommendation system capable of providing accurate and relevant travel suggestions.
