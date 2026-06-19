@@ -1,3 +1,4 @@
+from app.services.auth_service import hash_password
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -23,7 +24,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     db_user = User(
         name=user.name,
         email=user.email,
-        password_hash=user.password
+        password_hash=hash_password(user.password)
     )
 
     db.add(db_user)

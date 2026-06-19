@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, String, Text, Double, Integer, Float
+from sqlalchemy import Column, Enum, BigInteger, String, Text, Double, Integer, Float
 from app.database.connection import Base
 
 
@@ -12,6 +12,9 @@ class Attraction(Base):
     description = Column(Text)
     latitude = Column(Double)
     longitude = Column(Double)
-    estimated_visit_time = Column(Integer)
+    visit_time_min = Column(Integer)
     rating = Column(Float)
     destination_id = Column(Integer)
+    tip_spatiu = Column(Enum("indoor", "outdoor"), nullable=False, default="outdoor")
+    range_pret = Column(Integer, nullable=False, default=1)
+    image_url = Column(String(500), nullable=True)
