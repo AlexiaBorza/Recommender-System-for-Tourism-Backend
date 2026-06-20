@@ -1,14 +1,10 @@
 import sys
 from pathlib import Path
-
-# Permite importul modulelor din app/ atunci când rulezi pytest din root
 sys.path.insert(0, str(Path(__file__).parent.parent))
-
 from app.services.ai_loader import load_all_models, get_sentiment_model
 
 
 def setup_module(module):
-    """Se rulează o singură dată, înainte de toate testele din acest fișier."""
     load_all_models()
 
 

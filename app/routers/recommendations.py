@@ -20,11 +20,11 @@ def recommend(payload: RecommendationRequest, db: Session = Depends(get_db)):
 
     results = get_recommendations(
         db=db,
-        categorii_preferate=payload.categorii_preferate,
-        buget_max=payload.buget_max,
-        tip_spatiu=payload.tip_spatiu,
-        zi_saptamana=payload.zi_saptamana,
-        ora_start_minute=payload.ora_start,
+        preferred_categories=payload.categorii_preferate,
+        max_budget=payload.buget_max,
+        space_type=payload.tip_spatiu,
+        weekday=payload.zi_saptamana,
+        start_time_minute=payload.ora_start,
         user_id=payload.user_id,
         top_n=payload.top_n,
     )
@@ -48,11 +48,9 @@ def recommend(payload: RecommendationRequest, db: Session = Depends(get_db)):
             if schedule.ora_inchidere == 0:
                 opening_hours = "Open 24h"
             else:
-                deschidere = format_hour(schedule.ora_deschidere)
-                inchidere = format_hour(schedule.ora_inchidere)
-                opening_hours = f"{deschidere} - {inchidere}"
-        else:
-            print(f"  NO SCHEDULE FOUND for id {a.id}, zi {payload.zi_saptamana}")
+                opens_at = format_hour(schedule.ora_deschidere)
+                closes_at = format_hour(schedule.ora_inchidere)
+                opening_hours = f"{opens_at} - {closes_at}"
 
         attraction_data = AttractionResponse(
             id=a.id,

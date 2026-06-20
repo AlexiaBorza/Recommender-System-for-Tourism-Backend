@@ -22,7 +22,6 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     if existing_username:
         raise HTTPException(status_code=400, detail="Username deja folosit")
 
-    existing_username = db.query(User).filter(User.name == payload.username).first()
     db_user = User(
         name=payload.username,
         email=payload.email,

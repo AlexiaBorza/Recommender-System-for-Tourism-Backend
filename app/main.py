@@ -3,7 +3,6 @@ from pydantic import BaseModel
 from sqlalchemy.sql.annotation import Annotated
 import app.models.user as user
 import app.models.attractions as attractions
-import app.models.destination as destinations
 from app.database.connection import engine, SessionLocal
 from app.database.connection import get_db
 from sqlalchemy.orm import Session
@@ -21,7 +20,7 @@ async def startup_event():
 def root():
     return {"message": "ok"}
 
-# CORS — permite cereri din frontend
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],

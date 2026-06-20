@@ -6,10 +6,10 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 MODELS_DIR = Path(__file__).parent / "models"
-CSV_PATH   = Path(__file__).parent.parent.parent / "atractii_master_final.csv"
+CSV_PATH = Path(__file__).parent.parent.parent / "atractii_master_final.csv"
 
-_cosine_model    = None
-_svd_model       = None
+_cosine_model = None
+_svd_model = None
 _sentiment_model = None
 
 
@@ -32,12 +32,12 @@ category_tags = {
     "zoo":        "zoo animale familie copii natura",
 }
 
-spatiu_tags = {
+space_tags = {
     "indoor":  "interior acoperit vreme_rea",
     "outdoor": "exterior aer_liber vreme_buna",
 }
 
-pret_tags = {
+price_tags = {
     1: "ieftin buget_mic accesibil",
     2: "mediu buget_mediu",
     3: "scump premium lux",
@@ -45,15 +45,14 @@ pret_tags = {
 
 
 def _build_cosine_model():
-    """Re-antrenează TF-IDF din CSV dacă pkl-ul are probleme de compatibilitate."""
     df = pd.read_csv(CSV_PATH)
     df = df[~df["category"].isin(["hotel", "guest_house"])].reset_index(drop=True)
 
     def build_tags(row):
         tags = []
         tags.append(category_tags.get(row["category"], row["category"]))
-        tags.append(spatiu_tags.get(row["tip_spatiu"], ""))
-        tags.append(pret_tags.get(row["range_pret"], ""))
+        tags.append(space_tags.get(row["tip_spatiu"], ""))
+        tags.append(price_tags.get(row["range_pret"], ""))
         return " ".join(tags)
 
     df["tags"] = df.apply(build_tags, axis=1)
@@ -66,8 +65,8 @@ def _build_cosine_model():
         "tfidf_matrix":     tfidf_matrix,
         "dataframe":        df,
         "category_tags":    category_tags,
-        "spatiu_tags":      spatiu_tags,
-        "pret_tags":        pret_tags,
+        "spatiu_tags":       space_tags,
+        "pret_tags":         price_tags,
     }
 
 
@@ -83,20 +82,16 @@ def load_all_models():
         raise FileNotFoundError(f"sentiment_model.pkl negăsit în {MODELS_DIR}")
 
     # Cosine model — re-antrenat din CSV (evităm problema de compatibilitate pkl)
-    print("Antrenez modelul cosine din CSV...")
     _cosine_model = _build_cosine_model()
-    print(f"  Cosine model gata — {len(_cosine_model['dataframe'])} atracții")
 
     # SVD și sentiment — încărcate din pkl
     with open(svd_path, "rb") as f:
         _svd_model = dill.load(f)
-    print("  SVD model încărcat")
 
     with open(sentiment_path, "rb") as f:
         _sentiment_model = dill.load(f)
-    print("  Sentiment model încărcat")
 
-    print("Modele AI încărcate cu succes.")
+    print(f"Modele AI încărcate cu succes ({len(_cosine_model['dataframe'])} atracții).")
 
 
 def get_cosine_model():

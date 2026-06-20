@@ -10,7 +10,6 @@ class ItineraryRequest(BaseModel):
     tip_spatiu: Optional[str] = None
     zi_saptamana: int
     ora_start: int
-    cu_copii: bool = False
     lat_start: Optional[float] = None
     lon_start: Optional[float] = None
     timp_disponibil: int = 180

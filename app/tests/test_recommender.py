@@ -21,11 +21,11 @@ def test_recomandari_returneaza_rezultate():
     try:
         rezultate = get_recommendations(
             db=db,
-            categorii_preferate=["park"],
-            buget_max=2,
-            tip_spatiu=None,
-            zi_saptamana=5,
-            ora_start_minute=600,
+            preferred_categories=["park"],
+            max_budget=2,
+            space_type=None,
+            weekday=5,
+            start_time_minute=600,
             top_n=10,
         )
         assert len(rezultate) > 0
@@ -38,14 +38,13 @@ def test_recomandari_respecta_categoria():
     try:
         rezultate = get_recommendations(
             db=db,
-            categorii_preferate=["museum"],
-            buget_max=3,
-            tip_spatiu=None,
-            zi_saptamana=5,
-            ora_start_minute=600,
+            preferred_categories=["museum"],
+            max_budget=3,
+            space_type=None,
+            weekday=5,
+            start_time_minute=600,
             top_n=10,
         )
-        # toate rezultatele trebuie să fie din categoria ceruta
         for atractie in rezultate:
             assert atractie.category == "museum"
     finally:
@@ -57,11 +56,11 @@ def test_recomandari_respecta_bugetul():
     try:
         rezultate = get_recommendations(
             db=db,
-            categorii_preferate=["restaurant", "cafe"],
-            buget_max=1,
-            tip_spatiu=None,
-            zi_saptamana=5,
-            ora_start_minute=600,
+            preferred_categories=["restaurant", "cafe"],
+            max_budget=1,
+            space_type=None,
+            weekday=5,
+            start_time_minute=600,
             top_n=20,
         )
         for atractie in rezultate:

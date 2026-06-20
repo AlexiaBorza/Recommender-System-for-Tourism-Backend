@@ -4,7 +4,6 @@ from app.models.attraction_schedule import AttractionSchedule
 from app.services.recommender import get_recommendations, is_open, hhmm_to_minutes
 import math
 
-
 def haversine(lat1, lon1, lat2, lon2) -> float:
     R = 6371
     dlat = math.radians(lat2 - lat1)
@@ -14,129 +13,125 @@ def haversine(lat1, lon1, lat2, lon2) -> float:
     return (dist_km / 5) * 60
 
 
-def sorteaza_greedy(traseu, lat_start, lon_start):
-    if not traseu:
+def greedy_sort(route, lat_start, lon_start):
+    if not route:
         return []
-    ramase = list(traseu)
-    ordonate = []
+    unvisited = list(route)
+    ordered_route = []
     lat_cur, lon_cur = lat_start, lon_start
-    while ramase:
-        cea_mai_apropiata = min(
-            ramase,
+    while unvisited:
+        closest_attraction = min(
+            unvisited,
             key=lambda a: haversine(lat_cur, lon_cur, a.latitude, a.longitude)
         )
-        ordonate.append(cea_mai_apropiata)
-        lat_cur, lon_cur = cea_mai_apropiata.latitude, cea_mai_apropiata.longitude
-        ramase.remove(cea_mai_apropiata)
-    return ordonate
+        ordered_route.append(closest_attraction)
+        lat_cur, lon_cur = closest_attraction.latitude, closest_attraction.longitude
+        unvisited.remove(closest_attraction)
+    return ordered_route
 
 
 def fitness(
-    traseu: list,
+    route: list,
     lat_start: float,
     lon_start: float,
-    timp_disponibil: int,
-    zi_saptamana: int,
-    ora_start: int,
+    available_time: int,
+    weekday: int,
+    start_time: int,
     db: Session,
 ) -> float:
-    if not traseu:
+    if not route:
         return 0.0
 
-    timp_total = 0
+    total_time = 0
     lat_cur, lon_cur = lat_start, lon_start
-    ora_curenta = ora_start
-    scor = 0
+    current_time = start_time
+    fitness_score = 0
 
-    for a in traseu:
-        timp_deplasare = haversine(lat_cur, lon_cur, a.latitude, a.longitude)
-        timp_total += timp_deplasare
-        ora_curenta += int(timp_deplasare)
+    for a in route:
+        travel_time = haversine(lat_cur, lon_cur, a.latitude, a.longitude)
+        total_time += travel_time
+        current_time += int(travel_time)
 
         schedule = db.query(AttractionSchedule).filter(
             AttractionSchedule.id == a.id
         ).all()
-        if not is_open(schedule, zi_saptamana, ora_curenta):
+        if not is_open(schedule, weekday, current_time):
             return 0.0  # traseu invalid dacă o atracție e închisă
 
         visit = a.visit_time_min or 30
-        timp_total += visit
-        ora_curenta += visit
+        total_time += visit
+        current_time += visit
 
-        if timp_total > timp_disponibil:
+        if total_time > available_time:
             return 0.0
 
-        scor += 1 + (1 / (timp_deplasare + 1))  # mai multe atracții + distanță mică = mai bun
+        fitness_score += 1 + (1 / (travel_time + 1))
         lat_cur, lon_cur = a.latitude, a.longitude
 
-    return scor
+    return fitness_score
 
 
 def genetic_itinerary(
     candidates: list,
     lat_start: float,
     lon_start: float,
-    timp_disponibil: int,
-    zi_saptamana: int,
-    ora_start: int,
+    available_time: int,
+    weekday: int,
+    start_time: int,
     db: Session,
-    populatie: int = 50,
-    generatii: int = 100,
+    population_size: int = 50,
+    generation_count: int = 100,
 ) -> list:
 
     if not candidates:
         return []
 
-    def individ_random():
+    def random_individual():
         n = random.randint(1, min(len(candidates), 8))
         return random.sample(candidates, n)
 
-    pop = [individ_random() for _ in range(populatie)]
+    pop = [random_individual() for _ in range(population_size)]
 
-    def evalueaza(ind):
-        return fitness(ind, lat_start, lon_start, timp_disponibil, zi_saptamana, ora_start, db)
+    def evaluate_fitness(ind):
+        return fitness(ind, lat_start, lon_start, available_time, weekday, start_time, db)
 
-    for _ in range(generatii):
+    for _ in range(generation_count):
 
-        scoruri = [(ind, evalueaza(ind)) for ind in pop]
-        scoruri.sort(key=lambda x: x[1], reverse=True)
+        scored_population = [(ind, evaluate_fitness(ind)) for ind in pop]
+        scored_population.sort(key=lambda x: x[1], reverse=True)
 
+        survivors = [ind for ind, _ in scored_population[:population_size // 2]]
 
-        supravietuitori = [ind for ind, _ in scoruri[:populatie // 2]]
-
-
-        copii = []
-        while len(copii) < populatie // 2:
-            p1, p2 = random.sample(supravietuitori, 2)
+        offspring = []
+        while len(offspring) < population_size // 2:
+            p1, p2 = random.sample(survivors, 2)
             combined = list({a.id: a for a in p1 + p2}.values())
             n = random.randint(1, min(len(combined), 8))
-            copil = random.sample(combined, n)
-            copii.append(copil)
+            child_individual = random.sample(combined, n)
+            offspring.append(child_individual)
 
-
-        for ind in copii:
+        for ind in offspring:
             if random.random() < 0.1 and candidates:
-                nou = random.choice(candidates)
-                if nou not in ind:
-                    ind.append(nou)
+                new_attraction = random.choice(candidates)
+                if new_attraction not in ind:
+                    ind.append(new_attraction)
 
-        pop = supravietuitori + copii
+        pop = survivors + offspring
 
-    best = max(pop, key=evalueaza)
-    return best if evalueaza(best) > 0 else []
+    best = max(pop, key=evaluate_fitness)
+    return best if evaluate_fitness(best) > 0 else []
 
 
 def build_itinerary(
     db: Session,
-    categorii_preferate: list,
-    buget_max: int,
-    tip_spatiu: str | None,
-    zi_saptamana: int,
-    ora_start: int,
-    cu_copii: bool,
+    preferred_categories: list,
+    max_budget: int,
+    space_type: str | None,
+    weekday: int,
+    start_time: int,
     lat_start: float,
     lon_start: float,
-    timp_disponibil: int,
+    available_time: int,
     user_id: int | None = None,
     saved_attraction_ids: list = [],
 ) -> tuple:
@@ -149,53 +144,50 @@ def build_itinerary(
     else:
         candidates = get_recommendations(
             db=db,
-            categorii_preferate=categorii_preferate,
-            buget_max=buget_max,
-            tip_spatiu=tip_spatiu,
-            zi_saptamana=zi_saptamana,
-            ora_start_minute=ora_start,
-            cu_copii=cu_copii,
+            preferred_categories=preferred_categories,
+            max_budget=max_budget,
+            space_type=space_type,
+            weekday=weekday,
+            start_time_minute=start_time,
             user_id=user_id,
             top_n=20,
         )
 
-    traseu = sorteaza_greedy(genetic_itinerary(
+    route = greedy_sort(genetic_itinerary(
         candidates=candidates,
         lat_start=lat_start,
         lon_start=lon_start,
-        timp_disponibil=timp_disponibil,
-        zi_saptamana=zi_saptamana,
-        ora_start=ora_start,
+        available_time=available_time,
+        weekday=weekday,
+        start_time=start_time,
         db=db,
     ), lat_start, lon_start)
 
-
-    timp_total = 0
+    total_time = 0
     lat_cur, lon_cur = lat_start, lon_start
     stops = []
-    ora_curenta = ora_start
+    current_time = start_time
 
-    for a in traseu:
-        timp_deplasare = haversine(lat_cur, lon_cur, a.latitude, a.longitude)
-        timp_total += int(timp_deplasare)
-        ora_curenta += int(timp_deplasare)
+    for a in route:
+        travel_time = haversine(lat_cur, lon_cur, a.latitude, a.longitude)
+        total_time += int(travel_time)
+        current_time += int(travel_time)
 
         visit = a.visit_time_min or 30
-        timp_total += visit
+        total_time += visit
 
-        ore = ora_curenta // 60
-        minute = ora_curenta % 60
-        ora_str = f"{ore:02d}:{minute:02d}"
+        hours = current_time // 60
+        minutes = current_time % 60
+        time_str = f"{hours:02d}:{minutes:02d}"
 
         stops.append({
             "attraction": a,
-            "ora_vizita": ora_str,
+            "ora_vizita": time_str,
             "durata_minute": visit,
-            "timp_tranzit_minute": int(timp_deplasare),
+            "timp_tranzit_minute": int(travel_time),
         })
 
-        ora_curenta += visit
+        current_time += visit
         lat_cur, lon_cur = a.latitude, a.longitude
 
-    return stops, timp_total
-
+    return stops, total_time

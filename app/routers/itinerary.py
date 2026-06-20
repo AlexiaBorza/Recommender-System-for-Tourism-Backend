@@ -7,6 +7,7 @@ from app.services.itinerary_service import build_itinerary
 
 router = APIRouter(prefix="/itinerary", tags=["Itinerary"])
 
+
 @router.post("/generate", response_model=ItineraryResponse)
 def generate_itinerary(payload: ItineraryRequest, db: Session = Depends(get_db)):
 
@@ -14,15 +15,14 @@ def generate_itinerary(payload: ItineraryRequest, db: Session = Depends(get_db))
     lon = payload.lon_start or 21.2087
     stops, total_minutes = build_itinerary(
         db=db,
-        categorii_preferate=payload.categorii_preferate,
-        buget_max=payload.buget_max,
-        tip_spatiu=payload.tip_spatiu,
-        zi_saptamana=payload.zi_saptamana,
-        ora_start=payload.ora_start,
-        cu_copii=payload.cu_copii,
+        preferred_categories=payload.categorii_preferate,
+        max_budget=payload.buget_max,
+        space_type=payload.tip_spatiu,
+        weekday=payload.zi_saptamana,
+        start_time=payload.ora_start,
         lat_start=lat,
         lon_start=lon,
-        timp_disponibil=payload.timp_disponibil,
+        available_time=payload.timp_disponibil,
         user_id=payload.user_id,
         saved_attraction_ids=payload.saved_attraction_ids,
     )
@@ -45,4 +45,3 @@ def generate_itinerary(payload: ItineraryRequest, db: Session = Depends(get_db))
             for s in stops
         ],
     )
-

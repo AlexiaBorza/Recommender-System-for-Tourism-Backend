@@ -21,15 +21,14 @@ def test_itinerariu_respecta_timpul_disponibil():
     try:
         stops, total_minutes = build_itinerary(
             db=db,
-            categorii_preferate=["park", "museum"],
-            buget_max=2,
-            tip_spatiu=None,
-            zi_saptamana=5,
-            ora_start=540,
-            cu_copii=False,
+            preferred_categories=["park", "museum"],
+            max_budget=2,
+            space_type=None,
+            weekday=5,
+            start_time=540,
             lat_start=45.7489,
             lon_start=21.2087,
-            timp_disponibil=240,
+            available_time=240,
         )
         assert total_minutes <= 240
     finally:
@@ -41,18 +40,17 @@ def test_itinerariu_nu_are_duplicate():
     try:
         stops, total_minutes = build_itinerary(
             db=db,
-            categorii_preferate=["park", "museum", "restaurant"],
-            buget_max=3,
-            tip_spatiu=None,
-            zi_saptamana=5,
-            ora_start=540,
-            cu_copii=False,
+            preferred_categories=["park", "museum", "restaurant"],
+            max_budget=3,
+            space_type=None,
+            weekday=5,
+            start_time=540,
             lat_start=45.7489,
             lon_start=21.2087,
-            timp_disponibil=300,
+            available_time=300,
         )
         ids = [s["attraction"].id for s in stops]
-        assert len(ids) == len(set(ids))  # toate ID-urile sunt unice
+        assert len(ids) == len(set(ids))
     finally:
         db.close()
 
@@ -60,18 +58,16 @@ def test_itinerariu_nu_are_duplicate():
 def test_itinerariu_cu_saved_attractions():
     db = get_db_session()
     try:
-        # foloseste atractii reale din DB - inlocuieste cu ID-uri valide din baza ta
         stops, total_minutes = build_itinerary(
             db=db,
-            categorii_preferate=[],
-            buget_max=3,
-            tip_spatiu=None,
-            zi_saptamana=5,
-            ora_start=540,
-            cu_copii=False,
+            preferred_categories=[],
+            max_budget=3,
+            space_type=None,
+            weekday=5,
+            start_time=540,
             lat_start=45.7489,
             lon_start=21.2087,
-            timp_disponibil=300,
+            available_time=300,
             saved_attraction_ids=[58417, 1250434],
         )
         assert len(stops) > 0
